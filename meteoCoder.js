@@ -1140,20 +1140,71 @@ function displayLineComparison(userLines, correctLines, type) {
 
 // Инициализация при загрузке
 document.addEventListener('DOMContentLoaded', function() {
-  initTopMenu();
-  initTrainerModes();
-  initCodeTypeButtons();
-  updateTrainerStats();
+  console.log('DOM loaded, initializing...');
   
-  // Инициализация первого упражнения
-  newPracticeCode();
-  if (typeof newEncodeExercise === 'function') {
-    newEncodeExercise();
+  try {
+    // Загружаем настройки первым делом
+    loadSettings();
+    
+    // Проверяем наличие основных элементов
+    const mainContent = document.querySelector('.main-content');
+    if (!mainContent) {
+      console.error('Main content not found');
+      return;
+    }
+    
+    // Инициализируем компоненты с проверками
+    if (typeof initTopMenu === 'function') {
+      initTopMenu();
+    } else {
+      console.warn('initTopMenu function not found');
+    }
+    
+    if (typeof initTrainerModes === 'function') {
+      initTrainerModes();
+    } else {
+      console.warn('initTrainerModes function not found');
+    }
+    
+    if (typeof initCodeTypeButtons === 'function') {
+      initCodeTypeButtons();
+    } else {
+      console.warn('initCodeTypeButtons function not found');
+    }
+    
+    if (typeof updateTrainerStats === 'function') {
+      updateTrainerStats();
+    } else {
+      console.warn('updateTrainerStats function not found');
+    }
+    
+    // Инициализация первого упражнения
+    if (typeof newPracticeCode === 'function') {
+      newPracticeCode();
+    } else {
+      console.warn('newPracticeCode function not found');
+    }
+    
+    if (typeof newEncodeExercise === 'function') {
+      newEncodeExercise();
+    } else {
+      console.warn('newEncodeExercise function not found');
+    }
+    
+    // Скрываем практические режимы для недоступных типов кодов при старте
+    const initialCodeTypeBtn = document.querySelector('.code-type-btn.active');
+    if (initialCodeTypeBtn && initialCodeTypeBtn.dataset && initialCodeTypeBtn.dataset.type) {
+      if (typeof togglePracticeModes === 'function') {
+        togglePracticeModes(initialCodeTypeBtn.dataset.type);
+      } else {
+        console.warn('togglePracticeModes function not found');
+      }
+    }
+    
+    console.log('Initialization completed successfully');
+  } catch (error) {
+    console.error('Error during initialization:', error);
   }
-  
-  // Скрываем практические режимы для недоступных типов кодов при старте
-  const initialCodeType = document.querySelector('.code-type-btn.active').dataset.type;
-  togglePracticeModes(initialCodeType);
 });
 
 // Функции для проверки
@@ -1167,7 +1218,7 @@ function checkEncode() {
   }
 }
 
-// Остальной код остается без изменений...
+
 function clearFields() {
   document.getElementById('metar-input').value = '';
   document.getElementById('decode-result').textContent = 'Здесь появится расшифровка кода...';
@@ -1239,8 +1290,22 @@ function initTopMenu() {
 }
 
 function initTrainerModes() {
-  document.querySelectorAll('.mode-btn').forEach(btn => {
+  const modeBtns = document.querySelectorAll('.mode-btn');
+  if (modeBtns.length === 0) {
+    console.warn('Mode buttons not found');
+    return;
+  }
+  
+  const modeContents = document.querySelectorAll('.mode-content');
+  
+  modeBtns.forEach(btn => {
     btn.addEventListener('click', function() {
+      // Проверяем, что кнопка существует
+      if (!this || !this.dataset || !this.dataset.mode) {
+        console.error('Invalid mode button clicked');
+        return;
+      }
+      
       document.querySelectorAll('.mode-btn').forEach(b => {
         b.classList.remove('active');
         b.setAttribute('aria-selected', 'false');
@@ -1248,18 +1313,27 @@ function initTrainerModes() {
       this.classList.add('active');
       this.setAttribute('aria-selected', 'true');
       
-      document.querySelectorAll('.mode-content').forEach(content => {
-        content.classList.remove('active');
+      // Скрываем все mode-content
+      modeContents.forEach(content => {
+        if (content) {
+          content.classList.remove('active');
+        }
       });
       
       const mode = this.dataset.mode;
-      document.getElementById(mode + '-content').classList.add('active');
+      const contentId = mode + '-content';
+      const targetContent = document.getElementById(contentId);
       
-      const devMessage = document.getElementById('dev-message');
-      if (mode === 'practice-encode') {
-        devMessage.style.display = 'block';
+      if (targetContent) {
+        targetContent.classList.add('active');
       } else {
-        devMessage.style.display = 'none';
+        console.warn(`Content not found for mode: ${mode}, id: ${contentId}`);
+      }
+      
+      // Обработка dev-message (если существует)
+      const devMessage = document.getElementById('dev-message');
+      if (devMessage) {
+        devMessage.style.display = mode === 'practice-encode' ? 'block' : 'none';
       }
     });
   });
