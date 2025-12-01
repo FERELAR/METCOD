@@ -1,5 +1,10 @@
 function toggleAccordion(element) {
     const panel = element.nextElementSibling;
+    if (!panel) {
+        console.error('Panel not found for accordion:', element);
+        return;
+    }
+    
     const isExpanded = element.getAttribute('aria-expanded') === 'true';
     
     if (panel.style.display === "block") {
@@ -18,13 +23,18 @@ function toggleAccordion(element) {
 document.addEventListener('DOMContentLoaded', function() {
     const accordionHeaders = document.querySelectorAll('.accordion h4');
     accordionHeaders.forEach(header => {
-        header.setAttribute('aria-expanded', 'false');
+       const panel = header.nextElementSibling;
+        if (!panel || !panel.classList.contains('panel')) {
+            console.warn('No panel found for accordion header:', header);
+            return;
+        }
+         header.setAttribute('aria-expanded', 'false');
         if (!header.querySelector('i')) {
             const icon = document.createElement('i');
             icon.className = 'fas fa-chevron-right';
             header.insertBefore(icon, header.firstChild);
-            header.innerHTML = ' ' + header.innerHTML;
         }
+         panel.style.display = 'none';
     });
 });
 
@@ -1301,14 +1311,3 @@ function loadSettings() {
 }
 
 loadSettings();
-function toggleAccordion(element) {
-  element.classList.toggle("active");
-  const panel = element.nextElementSibling;
-  if (panel.style.display === "block") {
-    panel.style.display = "none";
-    element.setAttribute("aria-expanded", "false");
-  } else {
-    panel.style.display = "block";
-    element.setAttribute("aria-expanded", "true");
-  }
-}
